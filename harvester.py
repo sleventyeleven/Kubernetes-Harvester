@@ -77,11 +77,12 @@ class harvester():
                     except:
                         continue
                     tmp_mainifest = dockerclient.inspect_image(tmp_pullurl)
-                for key in credkey:
-                    for tmp_env in tmp_mainifest['ContainerConfig']['Env']:
-                        if key in tmp_env.split('=')[0].lower():
-                            reported_issues.append({'name': tmp_env.split('=')[0], 'value': tmp_env.split('=')[1], 'container': container, 'pod': pod, 'namespace': pod_map[pod]['namespace'], 'key': key})
-                            logger.issue('Found a potential credential {0} in the manifest env of container {1} running in pod {2} in namespace {3}'.format(tmp_env.split('=')[0], container, pod, pod_map[pod]['namespace']))
+                if tmp_mainifest['ContainerConfig']['Env']:
+                    for key in credkey:
+                        for tmp_env in tmp_mainifest['ContainerConfig']['Env']:
+                            if key in tmp_env.split('=')[0].lower():
+                                reported_issues.append({'name': tmp_env.split('=')[0], 'value': tmp_env.split('=')[1], 'container': container, 'pod': pod, 'namespace': pod_map[pod]['namespace'], 'key': key})
+                                logger.issue('Found a potential credential {0} in the manifest env of container {1} running in pod {2} in namespace {3}'.format(tmp_env.split('=')[0], container, pod, pod_map[pod]['namespace']))
         return reported_issues
 
     def try_to_gather_cloud_tokens(self):
@@ -127,6 +128,7 @@ if __name__ == '__main__':
     setattr(logger, 'issue', lambda message, *args: logger._log(logging.ISSUE, message, args))
     new_harvester = harvester()
     pod_map = new_harvester.get_pod_map_all_namespaces()
+    logger.info('Requested all pod specs in all namespaces and got {0} pods'.format(len(pod_map)))
     reported_issues = new_harvester.parse_pod_map_for_creds(pod_map)
     cloud_map = new_harvester.try_to_gather_cloud_tokens()
     logger.info('Harvester completed with {0} potential credentials identified'.format(len(reported_issues) + len(cloud_map)))
