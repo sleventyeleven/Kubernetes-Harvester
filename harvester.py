@@ -51,8 +51,15 @@ class harvester():
                             if env.value_from is None:
                                 print('Found potential credential {0} in env of container {1} running in pod {2} in namespace {3}'.format(env.name, container, pod, pod_map[pod]['namespace']))
                                 reported_issues.append({'name': env.name, 'value': env.value, 'container': container, 'pod': pod, 'namespace': pod_map[pod]['namespace'], 'key': key})
-                dockerclient = docker.APIClient()
+                            else:
+                                if env.value_from.config_map_key_ref is None:
+                                    continue
+                                else:
+                                    tmp_configmap = self.core_client.read_namespaced_config_map(env.value_from.config_map_key_ref.name, pod_map[pod]['namespace'])
+                                    print('Found potential credential {0} in env configmap of container {1} running in pod {2} in namespace {3}'.format(env.value_from.config_map_key_ref.key, container, pod, pod_map[pod]['namespace']))
+                                    reported_issues.append({'name': env.value_from.config_map_key_ref.key, 'value': tmp_configmap.data[env.value_from.config_map_key_ref.key], 'container': container, 'pod': pod, 'namespace': pod_map[pod]['namespace'], 'key': key})
 
+                dockerclient = docker.APIClient()
                 if pod_map[pod]['containers'][container]['version'] is None:
                     tmp_pullurl = pod_map[pod]['containers'][container]['image']
                 else:
