@@ -32,4 +32,3 @@ optional arguments:
 ## TODO
 * Enhance configmap code to include nested maps and function loads like container envFrom
 * Review command history for other interesting files that might be embedded within the image
-* PEP8 this mess so its easier to collaborate 
